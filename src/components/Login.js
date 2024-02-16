@@ -1,10 +1,67 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Header from "./Header";
+
+import { checkValidData } from "../utils/validate";
+
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "../utils/firebase";
 
 export default function Login() {
   const [showSignIn, setShowSignIn] = useState(true);
+
+  const email = useRef(null);
+  const name = useRef(null);
+  const password = useRef(null);
+
+  const [err, setErr] = useState(null);
+
   const toggleSignInForm = () => {
     setShowSignIn(!showSignIn);
+  };
+
+  const loginHandler = (ev) => {
+    //validate the fields
+    ev.preventDefault();
+    const message = checkValidData(email.current.value, password.current.value);
+    setErr(message);
+
+    if (message !== null) return;
+
+    if (!showSignIn) {
+      //signup form
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value,
+        name.current.value
+      )
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          console.log(user);
+          // ...
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErr(errorCode + " - " + errorMessage);
+        });
+    } else {
+      //sign in form
+      signInWithEmailAndPassword(auth, email.current.value, password.current.value)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log(user);
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErr(errorCode + " - " + errorMessage);
+        });
+    }
   };
   return (
     <div>
@@ -21,22 +78,31 @@ export default function Login() {
         </h1>
         {!showSignIn && (
           <input
+            ref={name}
             type="text"
             placeholder="Name"
             className="p-4 my-4 w-full bg-gray-700"
           />
         )}
         <input
+          ref={email}
           type="text"
           placeholder="Email address"
           className="p-4 my-4 w-full bg-gray-700"
         />
         <input
           type="password"
+          ref={password}
           placeholder="password"
           className="p-4 my-4 w-full bg-gray-700"
         />
-        <button className="p-4 my-6 bg-red-600 w-full rounded-lg">
+        {err !== null && (
+          <p className="text-red-700 font-bold text-lg py-2">{err}</p>
+        )}
+        <button
+          className="p-4 my-6 bg-red-600 w-full rounded-lg"
+          onClick={loginHandler}
+        >
           {showSignIn ? "Sign in" : "Sign up"}
         </button>
         {showSignIn ? (
@@ -47,7 +113,7 @@ export default function Login() {
             New to netflix? Sign up now.
           </p>
         ) : (
-            <p
+          <p
             className="py-4 cursor-pointer hover:underline"
             onClick={toggleSignInForm}
           >
