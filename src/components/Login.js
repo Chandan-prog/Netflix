@@ -6,60 +6,75 @@ import { checkValidData } from "../utils/validate";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
-import { auth } from "../utils/firebase";
 
-export default function Login() {
-  const [showSignIn, setShowSignIn] = useState(true);
+import { auth } from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
+
+export default function   Login() {
+
+  const [isSignInForm, setIsSignInForm] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const email = useRef(null);
   const name = useRef(null);
   const password = useRef(null);
 
-  const [err, setErr] = useState(null);
+  const navigate = useNavigate();
 
   const toggleSignInForm = () => {
-    setShowSignIn(!showSignIn);
+    setIsSignInForm(!isSignInForm);
   };
 
   const loginHandler = (ev) => {
-    //validate the fields
     ev.preventDefault();
     const message = checkValidData(email.current.value, password.current.value);
-    setErr(message);
+    setErrorMessage(message);
+    if (message) return;
 
-    if (message !== null) return;
-
-    if (!showSignIn) {
-      //signup form
+    if (!isSignInForm) {
+      // Sign Up Logic
       createUserWithEmailAndPassword(
         auth,
         email.current.value,
-        password.current.value,
-        name.current.value
+        password.current.value
       )
         .then((userCredential) => {
-          // Signed up
           const user = userCredential.user;
-          console.log(user);
-          // ...
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: "https://avatars.githubusercontent.com/u/12824231?v=4",
+          })
+            .then(() => {
+              navigate("/browse");
+            })
+            .catch((error) => {
+              setErrorMessage(error.message);
+            });
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
-          setErr(errorCode + " - " + errorMessage);
+          setErrorMessage(errorCode + "-" + errorMessage);
         });
     } else {
-      //sign in form
-      signInWithEmailAndPassword(auth, email.current.value, password.current.value)
+      // Sign In Logic
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
         .then((userCredential) => {
+          // Signed in
           const user = userCredential.user;
           console.log(user);
+          navigate("/browse");
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
-          setErr(errorCode + " - " + errorMessage);
+          setErrorMessage(errorCode + "-" + errorMessage);
         });
     }
   };
@@ -74,9 +89,9 @@ export default function Login() {
       </div>
       <form className="absolute p-12 bg-black w-3/12 my-36 mx-auto right-0 left-0 bg-opacity-80 text-white rounded-lg">
         <h1 className="text-white text-4xl py-4">
-          {showSignIn ? "Sign in" : "Sign up"}
+          {isSignInForm ? "Sign in" : "Sign up"}
         </h1>
-        {!showSignIn && (
+        {!isSignInForm && (
           <input
             ref={name}
             type="text"
@@ -96,16 +111,16 @@ export default function Login() {
           placeholder="password"
           className="p-4 my-4 w-full bg-gray-700"
         />
-        {err !== null && (
-          <p className="text-red-700 font-bold text-lg py-2">{err}</p>
+        {errorMessage !== null && (
+          <p className="text-red-700 font-bold text-lg py-2">{errorMessage}</p>
         )}
         <button
           className="p-4 my-6 bg-red-600 w-full rounded-lg"
           onClick={loginHandler}
         >
-          {showSignIn ? "Sign in" : "Sign up"}
+          {isSignInForm ? "Sign in" : "Sign up"}
         </button>
-        {showSignIn ? (
+        {isSignInForm ? (
           <p
             className="py-4 cursor-pointer hover:underline"
             onClick={toggleSignInForm}
