@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 
 import { auth } from "../utils/firebase";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 export default function   Login() {
 
@@ -21,7 +21,7 @@ export default function   Login() {
   const name = useRef(null);
   const password = useRef(null);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const toggleSignInForm = () => {
     setIsSignInForm(!isSignInForm);
@@ -47,7 +47,7 @@ export default function   Login() {
             photoURL: "https://avatars.githubusercontent.com/u/12824231?v=4",
           })
             .then(() => {
-              navigate("/browse");
+              // navigate("/browse");
             })
             .catch((error) => {
               setErrorMessage(error.message);
@@ -69,7 +69,7 @@ export default function   Login() {
           // Signed in
           const user = userCredential.user;
           console.log(user);
-          navigate("/browse");
+          // navigate("/browse");
         })
         .catch((error) => {
           const errorCode = error.code;
